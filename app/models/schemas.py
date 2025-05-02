@@ -1,9 +1,9 @@
-# Pydantic models for request/response
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
-class EmailRequest(BaseModel):
+class Register(BaseModel):
     email: EmailStr
+    password: str = Field(..., min_length=8)
 
-class OTPVerify(BaseModel):
+class Login(BaseModel):
     email: EmailStr
-    otp: str
+    password: str
