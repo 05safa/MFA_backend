@@ -78,12 +78,18 @@ def register_user(email: str, password: str) -> Tuple[Optional[dict], Optional[s
         return None, "User already exists"
 
     hashed = generate_password_hash(password)
-    new_user = {"email": email, "password": hashed, "created_at": datetime.datetime.utcnow().isoformat()}
+    new_user = {"email": email, "password_hash": hashed, "created_at": datetime.datetime.utcnow().isoformat()}
     supabase.table("users").insert(new_user).execute()
 
     # On success we *reset* the counter so the user can retry quickly if they made typos
     redis_client.delete(rate_key)
-    return new_user, None
+    payload = {
+        "sub": email,
+        "iat": datetime.datetime.utcnow(),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
+    }
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return token, None
 
 
 def authenticate_user(email: str, password: str) -> Tuple[Optional[str], Optional[str]]:
